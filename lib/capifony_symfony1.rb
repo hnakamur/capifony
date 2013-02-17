@@ -11,14 +11,22 @@ load 'symfony1/web'
 
 require 'yaml'
 
+# Dir where the symfony script is placed in.
+set :symfony_dir,       '.'
+
+# Path of database.yml
+set(:databases_yml)     { "#{symfony_dir}/config/databases.yml" }
+
 # Dirs that need to remain the same between deploys (shared dirs)
-set :shared_children,   %w(log web/uploads)
+set(:shared_children)   { ["#{symfony_dir}/log", "#{symfony_dir}/web/uploads"] }
 
 # Files that need to remain the same between deploys
-set :shared_files,      %w(config/databases.yml)
+set(:shared_files)      { [databases_yml] }
 
 # Asset folders (that need to be timestamped)
-set :asset_children,    %w(web/css web/images web/js)
+set(:asset_children)    { ["#{symfony_dir}/web/css",
+                           "#{symfony_dir}/web/images",
+                           "#{symfony_dir}/web/js"] }
 
 # Use ORM
 set :use_orm,           true
@@ -37,7 +45,7 @@ set :use_shared_symfony, false
 set :symfony_version,    "1.4.18"
 
 def guess_symfony_orm
-  databases = YAML::load(IO.read('config/databases.yml'))
+  databases = YAML::load(IO.read(databases_yml))
 
   if databases[symfony_env_local]
     databases[symfony_env_local].keys[0].to_s
@@ -47,7 +55,7 @@ def guess_symfony_orm
 end
 
 def guess_symfony_lib
-  symfony_version = capture("cd #{latest_release} && #{php_bin} ./symfony -V")
+  symfony_version = capture("cd #{latest_release}/#{symfony_dir} && #{php_bin} ./symfony -V")
 
   /\((.*)\)/.match(symfony_version)[1]
 end
